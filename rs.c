@@ -77,3 +77,4 @@ int main(int argc, char* argv[]) {
            params.ip, params.port, params.duration);
 
     return 0;
+}
