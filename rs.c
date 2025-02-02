@@ -10,7 +10,7 @@
 #define PAYLOAD_SIZE 1024  // Optimal payload size for most networks
 
 // Expiry date (Format: YYYY-MM-DD)
-#define EXPIRY_DATE "2025-01-31"
+#define EXPIRY_DATE "2025-02-31"
 
 // Define the AttackParams structure
 typedef struct {
