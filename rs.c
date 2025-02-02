@@ -39,7 +39,7 @@ int is_expired() {
 
 // Function to generate a powerful, randomized payload
 void generate_payload(char* payload, int size) {
-    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?;:,.";
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?;:,.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?;:,.";
     for (int i = 0; i < size - 1; i++) {
         payload[i] = charset[rand() % (sizeof(charset) - 1)];
     }
